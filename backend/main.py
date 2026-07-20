@@ -22,6 +22,7 @@ from api.strategy import router as strategy_route
 from api.backtest import router as backtest_route
 from api.trade import router as trade_route
 from api.ws import router as ws_route
+from api.ai_analysis import router as ai_analysis_route
 from security.jwt import JWTBearer
 
 import os
