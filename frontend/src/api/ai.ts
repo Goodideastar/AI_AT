@@ -1,29 +1,9 @@
-import axios from 'axios';
+import api from './index';
 
-// 使用相对路径，开发环境由 vite proxy 转发，生产环境由 Nginx 反代
-// 空字符串表示请求发到当前域名，配合 Nginx /api 反代
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// 添加请求拦截器，自动添加 token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// 复用 index.ts 中的共享 axios 实例：
+// - 统一 baseURL（VITE_API_URL || '/api'）
+// - 统一 token 注入（synapse_token）
+// - 统一 401 响应拦截（清除 token 并跳转首页）
 
 export interface AIAnalysisRequest {
   symbol: string;
@@ -101,13 +81,13 @@ export interface RiskCheckResponse {
 export const aiApi = {
   // AI 市场分析
   analyze: async (data: AIAnalysisRequest): Promise<AIAnalysisResponse> => {
-    const response = await api.post('/api/ai/analyze', data);
+    const response = await api.post('/ai/analyze', data);
     return response.data;
   },
 
   // 获取 AI 信号列表
   getSignals: async (): Promise<{ code: number; data: AISignal[] }> => {
-    const response = await api.get('/api/ai/signals');
+    const response = await api.get('/ai/signals');
     return response.data;
   },
 
@@ -120,13 +100,13 @@ export const aiApi = {
     limit?: number;
     initial_capital?: number;
   }) => {
-    const response = await api.post('/api/ai/backtest', data);
+    const response = await api.post('/ai/backtest', data);
     return response.data;
   },
 
   // AI 风控检查
   riskCheck: async (data: RiskCheckRequest): Promise<RiskCheckResponse> => {
-    const response = await api.post('/api/ai/risk-check', data);
+    const response = await api.post('/ai/risk-check', data);
     return response.data;
   },
 };

@@ -3,7 +3,7 @@ import { aiApi, AISignal } from '../api/ai';
 
 export default function AIAnalysis() {
   const [symbol, setSymbol] = useState('BTCUSDT');
-  const [interval, setInterval] = useState('15m');
+  const [interval, setIntervalValue] = useState('15m');
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AISignal | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export default function AIAnalysis() {
               <label className="block text-sm font-medium mb-2">时间周期</label>
               <select
                 value={interval}
-                onChange={(e) => setInterval(e.target.value)}
+                onChange={(e) => setIntervalValue(e.target.value)}
                 className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
               >
                 <option value="5m">5分钟</option>

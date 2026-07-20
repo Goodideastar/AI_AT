@@ -25,10 +25,22 @@ from api.trade import router as trade_route
 from api.ws import router as ws_route
 from api.ai_analysis import router as ai_analysis_route
 from security.jwt import JWTBearer
+from service.market.manager import market_manager
 
 import os
 
 app=FastAPI(authentication_scheme=JWTBearer())
+
+
+@app.on_event("shutdown")
+async def _shutdown_event():
+    """应用关闭时释放 httpx AsyncClient 等异步资源"""
+    try:
+        await market_manager.close_all()
+    except Exception as e:
+        # 关闭过程异常不应阻塞进程退出
+        import logging
+        logging.getLogger(__name__).warning(f"关闭行情数据源失败: {e}")
 
 app.include_router(logout_route,prefix="/api")
 app.include_router(login_route,prefix="/api")

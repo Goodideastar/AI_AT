@@ -8,6 +8,7 @@ from service.captcha import consume_captcha
 from config.redis import redis_client
 from security.jwt import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from utils.client_ip import get_client_ip
+from service.trade.risk_manager import ensure_user_account
 import re
 import bcrypt
 import logging
@@ -19,15 +20,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 def check_rate_limit(key: str, limit: int = 5, window: int = 300) -> bool:
-    """检查频率限制，返回 True 表示被限制"""
-    current = redis_client.get(f"rate_limit:{key}")
-    if current and int(current) >= limit:
-        return True
-    pipe = redis_client.pipeline()
-    pipe.incr(f"rate_limit:{key}")
-    pipe.expire(f"rate_limit:{key}", window)
-    pipe.execute()
-    return False
+    """
+    检查频率限制，返回 True 表示被限制。
+    使用 INCR 原子操作避免 get-then-incr 的竞态条件：
+    先 INCR 拿到当前计数，再判断是否超限，首次 INCR 时设置过期时间。
+    """
+    redis_key = f"rate_limit:{key}"
+    current = redis_client.incr(redis_key)
+    if current == 1:
+        # 首次创建 key，设置过期时间
+        redis_client.expire(redis_key, window)
+    return current > limit
 
 class SendVerifyCodeRequest(BaseModel):
     username: str
@@ -99,7 +102,7 @@ async def register(request: Request, data: RegisterRequest):
         # 2. 验证码验证（防止恶意请求）
         logger.info(f"[注册] 验证验证码: email={email}")
         if not verify_code or not verify_verify_code(email, verify_code):
-            logger.warning(f"[注册] 验证码验证失败: email={email}, code={verify_code}")
+            logger.warning(f"[注册] 验证码验证失败: email={email}")
             raise HTTPException(status_code=400, detail="验证码错误")
         logger.info(f"[注册] 验证码验证通过: email={email}")
         
@@ -152,6 +155,9 @@ async def register(request: Request, data: RegisterRequest):
         # 6. 生成 token 并存储到 Redis
         access_token = create_access_token(data={"username": new_user.username, "user_id": new_user.id})
         redis_client.set(access_token, json.dumps({"username": new_user.username}), ex=ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+
+        # 7. 初始化用户风控账户（user_account:{user_id}）
+        ensure_user_account(new_user.id)
         
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,

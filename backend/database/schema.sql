@@ -170,6 +170,8 @@ CREATE TABLE IF NOT EXISTS strategy_shares (
     INDEX idx_is_public (is_public),
     INDEX idx_created_at (created_at),
     INDEX idx_rating (rating),
+    -- 同一用户对同一策略只能分享一次
+    UNIQUE KEY uq_share_user_strategy (user_id, strategy_id),
     CONSTRAINT fk_share_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_share_strategy FOREIGN KEY (strategy_id) REFERENCES strategies(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='策略市场分享表';

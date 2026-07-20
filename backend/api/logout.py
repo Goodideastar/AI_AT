@@ -1,7 +1,6 @@
 # 退出登录接口
 import logging
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPAuthorizationCredentials
 from security.jwt import JWTBearer
 from config.redis import redis_client
 
@@ -9,15 +8,15 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.post("/logout")
-async def logout(credentials: HTTPAuthorizationCredentials = Depends(JWTBearer())):
+async def logout(credentials: dict = Depends(JWTBearer())):
     """退出登录"""
-    token = credentials.credentials
-    
+    token = credentials.get("token")
+
     # 检查 token 是否存在于 Redis
     stored_token = redis_client.get(token)
     if not stored_token:
         raise HTTPException(status_code=401, detail="未登录或 token 已过期")
-    
+
     # 从 Redis 中删除 token
     try:
         redis_client.delete(token)

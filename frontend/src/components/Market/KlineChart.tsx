@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { createChart, IChartApi, ISeriesApi, CandlestickData } from 'lightweight-charts'
+import { createChart, IChartApi, ISeriesApi, CandlestickData, CandlestickSeries } from 'lightweight-charts'
 import { marketApi } from '../../api/market'
 
 interface KlineChartProps {
@@ -33,8 +33,8 @@ export default function KlineChart({ symbol, interval = '1h' }: KlineChartProps)
       },
     })
 
-    // 创建 K 线系列
-    candlestickSeriesRef.current = chartRef.current.addCandlestickSeries({
+    // 创建 K 线系列（v5 API：addSeries + 系列定义）
+    candlestickSeriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
       upColor: '#10b981',
       downColor: '#ef4444',
       borderVisible: false,

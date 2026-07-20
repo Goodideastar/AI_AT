@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
+from sqlalchemy.exc import IntegrityError
 from config.sqlalchemy import SessionLocal
 from models.strategy import Strategy
 from models.strategy_market import StrategyShare, StrategySubscription
@@ -85,6 +86,11 @@ async def publish_share(
     except HTTPException:
         db.rollback()
         raise
+    except IntegrityError as e:
+        # 唯一约束冲突：uq_share_user_strategy —— 并发场景下两个请求同时通过 SELECT 检查
+        db.rollback()
+        logger.warning(f"发布策略到市场重复: user_id={user_id}, strategy_id={strategy_id}, err={e}")
+        raise HTTPException(status_code=409, detail="该策略已分享到市场")
     except Exception as e:
         db.rollback()
         logger.error(f"发布策略到市场失败: {e}")
@@ -192,7 +198,10 @@ async def subscribe_share(
     user_id = credentials["user_id"]
 
     try:
-        share = db.query(StrategyShare).filter(StrategyShare.id == share_id).first()
+        # 加行锁防止并发订阅竞态
+        share = db.query(StrategyShare).filter(
+            StrategyShare.id == share_id
+        ).with_for_update().first()
         if not share:
             raise HTTPException(status_code=404, detail="策略分享不存在")
 
@@ -225,9 +234,12 @@ async def subscribe_share(
             )
             db.add(subscription)
 
-        # 订阅数 +1
-        share.subscribe_count = (share.subscribe_count or 0) + 1
+        # 订阅数 +1（原子 UPDATE，避免 read-modify-write 竞态）
+        db.query(StrategyShare).filter(StrategyShare.id == share_id).update(
+            {StrategyShare.subscribe_count: StrategyShare.subscribe_count + 1}
+        )
         db.commit()
+        db.refresh(share)
 
         logger.info(f"用户 {user_id} 订阅策略分享 {share_id}")
 
@@ -257,7 +269,10 @@ async def unsubscribe_share(
     user_id = credentials["user_id"]
 
     try:
-        share = db.query(StrategyShare).filter(StrategyShare.id == share_id).first()
+        # 加行锁防止并发取消订阅竞态
+        share = db.query(StrategyShare).filter(
+            StrategyShare.id == share_id
+        ).with_for_update().first()
         if not share:
             raise HTTPException(status_code=404, detail="策略分享不存在")
 
@@ -271,9 +286,12 @@ async def unsubscribe_share(
             raise HTTPException(status_code=400, detail="未订阅该策略")
 
         subscription.status = 0
-        # 订阅数 -1，最小为 0
-        share.subscribe_count = max((share.subscribe_count or 0) - 1, 0)
+        # 订阅数 -1，最小为 0（原子 UPDATE + GREATEST 保证）
+        db.query(StrategyShare).filter(StrategyShare.id == share_id).update(
+            {StrategyShare.subscribe_count: func.greatest(StrategyShare.subscribe_count - 1, 0)}
+        )
         db.commit()
+        db.refresh(share)
 
         logger.info(f"用户 {user_id} 取消订阅策略分享 {share_id}")
 

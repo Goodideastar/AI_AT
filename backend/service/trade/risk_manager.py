@@ -14,6 +14,28 @@ MAX_DAILY_LOSS_RATIO = 0.05    # 单日最大亏损占账户资金比例
 MAX_TRADE_RISK_RATIO = 0.02    # 单笔交易最大风险占账户资金比例
 STOP_LOSS_RATIO = 0.05         # 强制止损线（持仓亏损比例）
 
+# 新用户默认账户配置
+DEFAULT_INITIAL_CAPITAL = 10000.0
+
+
+def ensure_user_account(user_id: int, initial_capital: float = DEFAULT_INITIAL_CAPITAL) -> None:
+    """
+    初始化用户账户 Redis 键（仅当不存在时写入）。
+    应在用户注册时调用，保证后续风控校验可读到账户信息。
+    使用 SETNX 语义：已存在的账户不会被覆盖。
+    """
+    key = f"user_account:{user_id}"
+    if redis_client.exists(key):
+        return
+    account = {
+        "total_capital": float(initial_capital),
+        "position_value": 0.0,
+        "daily_loss": 0.0,
+    }
+    # SETNX 保证并发注册场景下也不会覆盖
+    redis_client.setnx(key, json.dumps(account))
+    logger.info("初始化用户账户: user_id=%s, initial_capital=%.2f", user_id, initial_capital)
+
 
 class RiskManager:
     """风控管理器：基于 Redis 中的用户账户信息执行风控校验。"""
@@ -26,12 +48,17 @@ class RiskManager:
             - total_capital: 账户总资金
             - position_value: 当前持仓市值
             - daily_loss: 当日已实现亏损（正数表示亏损）
+
+        若 key 不存在，自动以默认值初始化，避免风控始终拒绝。
         """
         key = f"user_account:{user_id}"
         raw = redis_client.get(key)
         if raw is None:
-            logger.warning("未找到用户账户信息, key=%s", key)
-            raise ValueError(f"用户账户信息不存在: {user_id}")
+            logger.warning("用户账户信息缺失，自动初始化: user_id=%s", user_id)
+            ensure_user_account(user_id)
+            raw = redis_client.get(key)
+            if raw is None:
+                raise ValueError(f"用户账户信息初始化失败: {user_id}")
         return json.loads(raw)
 
     # ------------------------------------------------------------------

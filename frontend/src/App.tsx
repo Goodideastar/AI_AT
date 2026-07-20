@@ -65,7 +65,10 @@ export default function App() {
   if (pathname === '/ai-analysis') {
     return (
       <AuthProvider>
-        <AIAnalysis />
+        <div className="w-full min-h-screen bg-gray-900 text-white" style={{ fontFamily: '"Space Mono", monospace' }}>
+          <Navbar entranceComplete={true} onOpenAuth={openAuth} />
+          <AIAnalysis />
+        </div>
         <AuthModal
           open={authOpen}
           initialMode={authMode}
@@ -79,7 +82,10 @@ export default function App() {
   if (pathname === '/strategy') {
     return (
       <AuthProvider>
-        <Strategy />
+        <div className="w-full min-h-screen bg-gray-900 text-white" style={{ fontFamily: '"Space Mono", monospace' }}>
+          <Navbar entranceComplete={true} onOpenAuth={openAuth} />
+          <Strategy />
+        </div>
         <AuthModal
           open={authOpen}
           initialMode={authMode}
@@ -93,7 +99,10 @@ export default function App() {
   if (pathname === '/backtest') {
     return (
       <AuthProvider>
-        <Backtest />
+        <div className="w-full min-h-screen bg-gray-900 text-white" style={{ fontFamily: '"Space Mono", monospace' }}>
+          <Navbar entranceComplete={true} onOpenAuth={openAuth} />
+          <Backtest />
+        </div>
         <AuthModal
           open={authOpen}
           initialMode={authMode}
@@ -107,7 +116,10 @@ export default function App() {
   if (pathname === '/trade') {
     return (
       <AuthProvider>
-        <Trade />
+        <div className="w-full min-h-screen bg-gray-900 text-white" style={{ fontFamily: '"Space Mono", monospace' }}>
+          <Navbar entranceComplete={true} onOpenAuth={openAuth} />
+          <Trade />
+        </div>
         <AuthModal
           open={authOpen}
           initialMode={authMode}
@@ -121,7 +133,10 @@ export default function App() {
   if (pathname === '/strategy-market') {
     return (
       <AuthProvider>
-        <StrategyMarket />
+        <div className="w-full min-h-screen bg-gray-900 text-white" style={{ fontFamily: '"Space Mono", monospace' }}>
+          <Navbar entranceComplete={true} onOpenAuth={openAuth} />
+          <StrategyMarket />
+        </div>
         <AuthModal
           open={authOpen}
           initialMode={authMode}

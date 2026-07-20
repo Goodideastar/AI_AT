@@ -9,7 +9,7 @@ export default function Backtest() {
   // 配置表单
   const [strategyId, setStrategyId] = useState<number | ''>('');
   const [symbol, setSymbol] = useState('BTCUSDT');
-  const [interval, setInterval] = useState('1h');
+  const [interval, setIntervalValue] = useState('1h');
   const [limit, setLimit] = useState(500);
   const [initialCapital, setInitialCapital] = useState(10000);
 
@@ -171,7 +171,7 @@ export default function Backtest() {
                   <label className="block text-sm font-medium mb-2">时间周期</label>
                   <select
                     value={interval}
-                    onChange={(e) => setInterval(e.target.value)}
+                    onChange={(e) => setIntervalValue(e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                   >
                     <option value="5m">5分钟</option>

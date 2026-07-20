@@ -155,7 +155,7 @@ def generate_captcha() -> dict:
     # --- Redis 存储目标 X 坐标 ---
     redis_client.set(f"captcha:{captcha_id}", str(target_x), ex=CAPTCHA_TTL)
 
-    logger.info(f"[验证码] 生成拼图: id={captcha_id}, target_x={target_x}, target_y={target_y}")
+    logger.info(f"[验证码] 生成拼图: id={captcha_id}")
 
     return {
         "captcha_id": captcha_id,
@@ -166,24 +166,40 @@ def generate_captcha() -> dict:
 
 
 def verify_captcha(captcha_id: str, slide_x: int) -> bool:
-    """验证滑动坐标是否匹配目标位置。通过后将 key 改为已验证标记。"""
+    """
+    验证滑动坐标是否匹配目标位置。通过后将 key 改为已验证标记。
+    限制每个 captcha_id 最多 5 次尝试，防止暴力枚举坐标。
+    """
     key = f"captcha:{captcha_id}"
+    attempts_key = f"captcha_attempts:{captcha_id}"
     target_str = redis_client.get(key)
     if target_str is None:
         logger.warning(f"[验证码] 验证失败: id={captcha_id}, key 不存在或已过期")
+        return False
+
+    # 原子递增尝试次数，首次设置 5 分钟过期（与 CAPTCHA_TTL 对齐）
+    attempts = redis_client.incr(attempts_key)
+    if attempts == 1:
+        redis_client.expire(attempts_key, CAPTCHA_TTL)
+    if attempts > 5:
+        # 超过 5 次尝试，删除 captcha 防止继续暴力
+        redis_client.delete(key)
+        redis_client.delete(attempts_key)
+        logger.warning(f"[验证码] 尝试次数超限: id={captcha_id}, attempts={attempts}")
         return False
 
     target_x = int(target_str)
     distance = abs(slide_x - target_x)
 
     if distance <= TOLERANCE:
-        # 验证通过：RENAME 到已验证标记，供 send_verify_code 消费
+        # 验证通过：RENAME 到已验证标记，供 send_verify_code 消费；清理尝试计数
         redis_client.rename(key, f"captcha_ok:{captcha_id}")
-        logger.info(f"[验证码] 滑动验证通过: id={captcha_id}, slide_x={slide_x}, target={target_x}, distance={distance}")
+        redis_client.delete(attempts_key)
+        logger.info(f"[验证码] 滑动验证通过: id={captcha_id}, distance={distance}")
         return True
     else:
-        # 验证失败：不删除 key，允许用户重试
-        logger.warning(f"[验证码] 滑动验证失败: id={captcha_id}, slide_x={slide_x}, target={target_x}, distance={distance}")
+        # 验证失败：不删除 key，允许用户在尝试次数内重试
+        logger.warning(f"[验证码] 滑动验证失败: id={captcha_id}, distance={distance}, attempts={attempts}")
         return False
 
 
@@ -204,11 +220,21 @@ DIGIT_CAPTCHA_W = 120
 DIGIT_CAPTCHA_H = 40
 DIGIT_CAPTCHA_TTL = 300  # 5 分钟过期
 
-# 加载 TrueType 字体（Windows 系统字体），失败时回退到默认字体
-try:
-    _DIGIT_FONT = ImageFont.truetype("C:\\Windows\\Fonts\\arialbd.ttf", 30)
-except OSError:
-    _DIGIT_FONT = ImageFont.load_default()
+# 加载 TrueType 字体：跨平台兼容（Linux 容器/Windows/Mac），全部失败则回退默认字体
+_FONT_CANDIDATES = [
+    "C:\\Windows\\Fonts\\arialbd.ttf",          # Windows
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux (Debian/Ubuntu)
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",  # Linux (CentOS/RHEL)
+    "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",  # Linux (Alpine)
+    "/System/Library/Fonts/Helvetica.ttc",       # macOS
+]
+_DIGIT_FONT = ImageFont.load_default()
+for _font_path in _FONT_CANDIDATES:
+    try:
+        _DIGIT_FONT = ImageFont.truetype(_font_path, 30)
+        break
+    except OSError:
+        continue
 
 
 def generate_digit_captcha() -> dict:
@@ -317,7 +343,7 @@ def generate_digit_captcha() -> dict:
     # Redis 存储：存答案，TTL 5 分钟
     redis_client.set(f"login_captcha:{captcha_id}", code, ex=DIGIT_CAPTCHA_TTL)
 
-    logger.info(f"[验证码] 生成数字验证码: id={captcha_id}, code={code}")
+    logger.info(f"[验证码] 生成数字验证码: id={captcha_id}")
     return {"captcha_id": captcha_id, "image": image_b64}
 
 
@@ -335,5 +361,5 @@ def verify_digit_captcha(captcha_id: str, user_code: str) -> bool:
     if stored.strip() == user_code.strip():
         logger.info(f"[验证码] 数字验证码校验通过: id={captcha_id}")
         return True
-    logger.warning(f"[验证码] 数字验证码校验失败: id={captcha_id}, 输入={user_code}, 正确={stored}")
+    logger.warning(f"[验证码] 数字验证码校验失败: id={captcha_id}")
     return False

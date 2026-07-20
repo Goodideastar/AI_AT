@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Float, DateTime, Enum, ForeignKey
 from sqlalchemy.sql import func
 from models.user import Base
 import enum
@@ -26,8 +26,8 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=False, index=True)
-    strategy_id = Column(Integer, index=True)  # 可为空（手动下单）
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    strategy_id = Column(Integer, ForeignKey("strategies.id"), index=True)  # 可为空（手动下单）
     symbol = Column(String(20), nullable=False)
     exchange = Column(String(20), nullable=False)
     side = Column(Enum(OrderSide), nullable=False)

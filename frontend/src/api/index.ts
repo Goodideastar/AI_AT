@@ -11,10 +11,13 @@ const api = axios.create({
   },
 })
 
+// 与 AuthContext 中的 TOKEN_KEY 保持一致
+const TOKEN_KEY = 'synapse_token'
+
 // 请求拦截器：添加认证 token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token')
+    const token = localStorage.getItem(TOKEN_KEY)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -31,7 +34,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token 过期或无效，清除本地存储
-      localStorage.removeItem('access_token')
+      localStorage.removeItem(TOKEN_KEY)
       window.location.href = '/'
     }
     return Promise.reject(error)

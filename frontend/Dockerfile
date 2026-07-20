@@ -10,9 +10,7 @@ FROM node:20-alpine AS builder
 # 接收构建参数（Vite 在构建时读取 VITE_ 前缀的环境变量）
 # 默认使用相对路径，Nginx 反代处理，无需硬编码地址
 ARG VITE_API_URL=/api
-ARG VITE_API_BASE_URL=
 ENV VITE_API_URL=${VITE_API_URL}
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 WORKDIR /app
 

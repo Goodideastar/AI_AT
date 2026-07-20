@@ -21,14 +21,16 @@ class JWTBearer(HTTPBearer):
             raise HTTPException(status_code=403, detail="无效的认证方案")
 
         token = credentials.credentials
-        
+
         # 验证 Redis 中是否存在该 token
         stored_token = redis_client.get(token)
         if not stored_token:
             raise HTTPException(status_code=401, detail="Token无效或已过期")
-        
+
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            # 注入原始 token，便于下游端点删除 Redis 中的会话
+            payload["token"] = token
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail="Token已过期")
