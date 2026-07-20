@@ -24,6 +24,7 @@ from api.backtest import router as backtest_route
 from api.trade import router as trade_route
 from api.ws import router as ws_route
 from api.ai_analysis import router as ai_analysis_route
+from api.ws import start_ws_background_tasks, stop_ws_background_tasks
 from security.jwt import JWTBearer
 from service.market.manager import market_manager
 
@@ -32,9 +33,24 @@ import os
 app=FastAPI(authentication_scheme=JWTBearer())
 
 
+@app.on_event("startup")
+async def _startup_event():
+    """应用启动：启动 WebSocket 后台广播/心跳任务"""
+    try:
+        start_ws_background_tasks()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"启动 WS 后台任务失败: {e}")
+
+
 @app.on_event("shutdown")
 async def _shutdown_event():
-    """应用关闭时释放 httpx AsyncClient 等异步资源"""
+    """应用关闭：先停 WS 后台任务，再释放 httpx AsyncClient 等异步资源"""
+    try:
+        await stop_ws_background_tasks()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"停止 WS 后台任务失败: {e}")
     try:
         await market_manager.close_all()
     except Exception as e:
