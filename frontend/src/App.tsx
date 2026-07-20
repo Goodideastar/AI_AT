@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound'
 import UserAgreement from './pages/UserAgreement'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Dashboard from './pages/Dashboard'
+import AIAnalysis from './pages/AIAnalysis'
 
 export default function App() {
   // Hero entrance drives the Navbar fade-in.
@@ -47,6 +48,20 @@ export default function App() {
     return (
       <AuthProvider>
         <Dashboard entranceComplete={true} onOpenAuth={openAuth} />
+        <AuthModal
+          open={authOpen}
+          initialMode={authMode}
+          onClose={() => setAuthOpen(false)}
+        />
+      </AuthProvider>
+    )
+  }
+
+  // AI Analysis route
+  if (pathname === '/ai-analysis') {
+    return (
+      <AuthProvider>
+        <AIAnalysis />
         <AuthModal
           open={authOpen}
           initialMode={authMode}
