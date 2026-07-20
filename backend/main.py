@@ -18,6 +18,7 @@ from api.login import router as login_route
 from api.logout import router as logout_route
 from api.destroy import router as destroy_route
 from api.market import router as market_route
+from api.strategy import router as strategy_route
 from security.jwt import JWTBearer
 
 import os
@@ -30,6 +31,7 @@ app.include_router(register_route,prefix="/api")
 app.include_router(destroy_route,prefix="/api")
 app.include_router(captcha_route,prefix="/api")
 app.include_router(market_route,prefix="/api")
+app.include_router(strategy_route,prefix="/api")
 # deepseek=ChatOpenAI(
 #     model=os.getenv("MODEL_NAME"),
 #     api_key=os.getenv("API_KEY"),
