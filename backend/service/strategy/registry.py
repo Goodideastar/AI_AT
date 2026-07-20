@@ -2,15 +2,21 @@ from typing import Dict, Type
 from service.strategy.base import StrategyBase
 from service.strategy.ma_cross import MACrossStrategy
 from service.strategy.intraday import IntradayStrategy
+from service.strategy.rsi import RSIStrategy
+from service.strategy.bollinger import BollingerStrategy
+from service.strategy.grid import GridStrategy
 
 
 class StrategyRegistry:
     """策略注册表"""
-    
+
     def __init__(self):
         self.strategies: Dict[str, Type[StrategyBase]] = {
             "ma_cross": MACrossStrategy,
-            "intraday": IntradayStrategy
+            "intraday": IntradayStrategy,
+            "rsi": RSIStrategy,
+            "bollinger": BollingerStrategy,
+            "grid": GridStrategy,
         }
     
     def register(self, name: str, strategy_class: Type[StrategyBase]):

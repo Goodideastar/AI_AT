@@ -2,14 +2,16 @@
 from typing import Dict, Optional
 from service.market.base import MarketDataSource
 from service.market.binance import BinanceDataSource
+from service.market.okx import OKXDataSource
 
 
 class MarketDataManager:
     """行情数据管理器"""
-    
+
     def __init__(self):
         self.sources: Dict[str, MarketDataSource] = {
-            "binance": BinanceDataSource()
+            "binance": BinanceDataSource(),
+            "okx": OKXDataSource()
         }
     
     def get_source(self, exchange: str) -> MarketDataSource:
