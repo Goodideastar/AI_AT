@@ -21,6 +21,7 @@ from api.market import router as market_route
 from api.strategy import router as strategy_route
 from api.backtest import router as backtest_route
 from api.trade import router as trade_route
+from api.ws import router as ws_route
 from security.jwt import JWTBearer
 
 import os
@@ -36,6 +37,7 @@ app.include_router(market_route,prefix="/api")
 app.include_router(strategy_route,prefix="/api")
 app.include_router(backtest_route,prefix="/api")
 app.include_router(trade_route,prefix="/api")
+app.include_router(ws_route)
 # deepseek=ChatOpenAI(
 #     model=os.getenv("MODEL_NAME"),
 #     api_key=os.getenv("API_KEY"),
