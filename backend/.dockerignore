@@ -1,0 +1,19 @@
+# =====================================================================
+# AI_AT 后端 Dockerfile 构建忽略文件
+# =====================================================================
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+.venv
+venv
+.git
+.gitignore
+*.md
+.env
+.vscode
+.idea
+.zcode
+tests

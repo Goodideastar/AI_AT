@@ -1,5 +1,11 @@
 # Environment
 backend/.env
+.env
+!.env.example
+
+# Docker
+mysql_data/
+redis_data/
 
 # IDE / tools
 .zcode/
