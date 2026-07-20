@@ -105,8 +105,13 @@ def _parse_json_response(text: str) -> Dict:
     cleaned = text.strip()
     # 去除可能的 markdown 代码块标记
     if cleaned.startswith("```"):
-        first_newline = cleaned.index("\n") if "\n" in cleaned else 3
-        cleaned = cleaned[first_newline + 1:]
+        # 安全地查找换行符，避免 IndexError
+        newline_idx = cleaned.find("\n")
+        if newline_idx != -1:
+            cleaned = cleaned[newline_idx + 1:]
+        else:
+            # 没有换行符，直接跳过前3个字符（```）
+            cleaned = cleaned[3:]
     if cleaned.endswith("```"):
         cleaned = cleaned[:-3]
     cleaned = cleaned.strip()

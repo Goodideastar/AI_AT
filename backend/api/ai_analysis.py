@@ -18,6 +18,16 @@ import os
 
 router = APIRouter(tags=["ai_analysis"])
 
+# 全局 MarketAnalyst 单例，避免每次请求都创建 LLM 客户端
+_analyst_instance = None
+
+def get_analyst() -> MarketAnalyst:
+    """获取 MarketAnalyst 单例"""
+    global _analyst_instance
+    if _analyst_instance is None:
+        _analyst_instance = MarketAnalyst()
+    return _analyst_instance
+
 
 def get_db():
     db = SessionLocal()
@@ -75,7 +85,7 @@ async def ai_analyze_market(
                     latest_indicators[col] = float(val)
     
     # AI 分析
-    analyst = MarketAnalyst()
+    analyst = get_analyst()
     analysis = await analyst.analyze_market(symbol, klines, latest_indicators)
     
     # 生成交易信号
@@ -158,8 +168,7 @@ async def get_ai_signals(
     # 监控的交易对
     symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT"]
     signals = []
-    
-    analyst = MarketAnalyst()
+    analyst = get_analyst()
     
     for symbol in symbols:
         try:

@@ -45,6 +45,11 @@ class IntradayStrategy(StrategyBase):
         self._prev_hist: Optional[float] = None
         # 持仓入场价，用于止损/止盈判断；None 表示当前无持仓
         self._entry_price: Optional[float] = None
+        
+        # MACD 增量计算状态
+        self._ema_fast: Optional[float] = None
+        self._ema_slow: Optional[float] = None
+        self._ema_signal: Optional[float] = None
 
     # --------------------------------------------------------------------- #
     # 生命周期回调
@@ -56,6 +61,9 @@ class IntradayStrategy(StrategyBase):
         self._prev_ema = None
         self._prev_hist = None
         self._entry_price = None
+        self._ema_fast = None
+        self._ema_slow = None
+        self._ema_signal = None
 
     def on_bar(self, bar: Dict) -> Optional[Dict]:
         """
@@ -192,24 +200,54 @@ class IntradayStrategy(StrategyBase):
 
     def _calc_macd(self):
         """
-        计算 MACD
+        计算 MACD（增量计算）
         返回：(macd_line, signal_line, histogram)
         """
         fast = self.parameters["macd_fast"]
         slow = self.parameters["macd_slow"]
         sig = self.parameters["macd_signal"]
         data = list(self._closes)
-
-        # 计算快慢 EMA 序列
-        ema_fast = self._ema_series(data, fast)
-        ema_slow = self._ema_series(data, slow)
-        # MACD 线 = 快 EMA - 慢 EMA
-        macd_line_series = [f - s for f, s in zip(ema_fast, ema_slow)]
-        # 信号线 = MACD 线的 EMA
-        signal_series = self._ema_series(macd_line_series, sig)
-        macd_line = macd_line_series[-1]
-        signal_line = signal_series[-1]
+        
+        # 首次计算或数据不足时，使用全量计算
+        if self._ema_fast is None or len(data) < slow + sig:
+            # 计算快慢 EMA 序列
+            ema_fast = self._ema_series(data, fast)
+            ema_slow = self._ema_series(data, slow)
+            # MACD 线 = 快 EMA - 慢 EMA
+            macd_line_series = [f - s for f, s in zip(ema_fast, ema_slow)]
+            # 信号线 = MACD 线的 EMA
+            signal_series = self._ema_series(macd_line_series, sig)
+            
+            # 保存当前状态
+            self._ema_fast = ema_fast[-1]
+            self._ema_slow = ema_slow[-1]
+            self._ema_signal = signal_series[-1]
+            
+            macd_line = self._ema_fast - self._ema_slow
+            signal_line = self._ema_signal
+            histogram = macd_line - signal_line
+            return macd_line, signal_line, histogram
+        
+        # 增量计算：只更新最新一根 bar
+        close = data[-1]
+        k_fast = 2.0 / (fast + 1)
+        k_slow = 2.0 / (slow + 1)
+        k_signal = 2.0 / (sig + 1)
+        
+        # 更新快慢 EMA
+        self._ema_fast = close * k_fast + self._ema_fast * (1 - k_fast)
+        self._ema_slow = close * k_slow + self._ema_slow * (1 - k_slow)
+        
+        # 计算 MACD 线
+        macd_line = self._ema_fast - self._ema_slow
+        
+        # 更新信号线
+        self._ema_signal = macd_line * k_signal + self._ema_signal * (1 - k_signal)
+        signal_line = self._ema_signal
+        
+        # 计算柱状图
         histogram = macd_line - signal_line
+        
         return macd_line, signal_line, histogram
 
     @staticmethod

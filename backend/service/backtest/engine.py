@@ -39,7 +39,7 @@ class BacktestEngine:
             
             # 记录权益曲线
             self.equity_curve.append({
-                "timestamp": bar["timestamp"],
+                "timestamp": bar.get("timestamp", bar.get("open_time")),
                 "equity": self.capital,
                 "price": bar["close"]
             })
