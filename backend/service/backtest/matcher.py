@@ -31,5 +31,5 @@ class OrderMatcher:
             "price": price,
             "commission": commission,
             "pnl": pnl,
-            "timestamp": bar["timestamp"]
+            "timestamp": bar.get("timestamp", bar.get("open_time"))
         }
