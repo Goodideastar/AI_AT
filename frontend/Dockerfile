@@ -7,6 +7,13 @@
 # ── 第一阶段：构建 ──
 FROM node:20-alpine AS builder
 
+# 接收构建参数（Vite 在构建时读取 VITE_ 前缀的环境变量）
+# 默认使用相对路径，Nginx 反代处理，无需硬编码地址
+ARG VITE_API_URL=/api
+ARG VITE_API_BASE_URL=
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 WORKDIR /app
 
 # 复制依赖清单
@@ -19,7 +26,7 @@ RUN npm config set registry https://registry.npmmirror.com \
 # 复制源代码
 COPY . .
 
-# 构建生产版本
+# 构建生产版本（Vite 会读取 VITE_ 环境变量注入到产物中）
 RUN npm run build
 
 # ── 第二阶段：运行 ──
