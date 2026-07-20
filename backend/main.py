@@ -19,6 +19,7 @@ from api.logout import router as logout_route
 from api.destroy import router as destroy_route
 from api.market import router as market_route
 from api.strategy import router as strategy_route
+from api.backtest import router as backtest_route
 from security.jwt import JWTBearer
 
 import os
