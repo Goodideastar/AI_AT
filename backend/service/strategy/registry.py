@@ -1,6 +1,7 @@
 from typing import Dict, Type
 from service.strategy.base import StrategyBase
 from service.strategy.ma_cross import MACrossStrategy
+from service.strategy.intraday import IntradayStrategy
 
 
 class StrategyRegistry:
@@ -8,7 +9,8 @@ class StrategyRegistry:
     
     def __init__(self):
         self.strategies: Dict[str, Type[StrategyBase]] = {
-            "ma_cross": MACrossStrategy
+            "ma_cross": MACrossStrategy,
+            "intraday": IntradayStrategy
         }
     
     def register(self, name: str, strategy_class: Type[StrategyBase]):

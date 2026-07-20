@@ -95,23 +95,31 @@ export default function AIAnalysis() {
                   </p>
                 </div>
                 <div>
+                  <p className="text-sm text-gray-400">趋势强度</p>
+                  <p className="text-lg font-bold text-blue-400">
+                    {analysis.analysis.trend_strength || '中'}
+                  </p>
+                </div>
+                <div>
                   <p className="text-sm text-gray-400">支撑位</p>
-                  <p className="text-lg font-bold">${analysis.analysis.support.toFixed(2)}</p>
+                  <p className="text-lg font-bold">
+                    {analysis.analysis.support_levels?.[0]?.toFixed(2) || '-'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400">阻力位</p>
-                  <p className="text-lg font-bold">${analysis.analysis.resistance.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">信心度</p>
-                  <p className="text-lg font-bold text-blue-400">
-                    {(analysis.analysis.confidence * 100).toFixed(1)}%
+                  <p className="text-lg font-bold">
+                    {analysis.analysis.resistance_levels?.[0]?.toFixed(2) || '-'}
                   </p>
                 </div>
               </div>
               <div className="mt-4">
+                <p className="text-sm text-gray-400 mb-2">关键观察</p>
+                <p className="text-gray-300">{analysis.analysis.key_observations || '暂无'}</p>
+              </div>
+              <div className="mt-4">
                 <p className="text-sm text-gray-400 mb-2">AI 分析理由</p>
-                <p className="text-gray-300">{analysis.analysis.reasoning}</p>
+                <p className="text-gray-300">{analysis.analysis.reason || '暂无'}</p>
               </div>
             </div>
 
@@ -122,33 +130,50 @@ export default function AIAnalysis() {
                 <div>
                   <p className="text-sm text-gray-400">方向</p>
                   <p className={`text-lg font-bold ${
-                    analysis.signal.direction === '做多' ? 'text-green-400' : 'text-red-400'
+                    analysis.signal.direction === 'long' ? 'text-green-400' :
+                    analysis.signal.direction === 'short' ? 'text-red-400' : 'text-gray-400'
                   }`}>
-                    {analysis.signal.direction}
+                    {analysis.signal.direction === 'long' ? '做多' :
+                     analysis.signal.direction === 'short' ? '做空' : '观望'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400">入场价</p>
-                  <p className="text-lg font-bold">${analysis.signal.entry_price.toFixed(2)}</p>
+                  <p className="text-lg font-bold">${analysis.signal.entry_price?.toFixed(2) || '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400">止损价</p>
                   <p className="text-lg font-bold text-red-400">
-                    ${analysis.signal.stop_loss.toFixed(2)}
+                    ${analysis.signal.stop_loss?.toFixed(2) || '-'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">止盈价</p>
+                  <p className="text-sm text-gray-400">目标价</p>
                   <p className="text-lg font-bold text-green-400">
-                    ${analysis.signal.take_profit.toFixed(2)}
+                    ${analysis.signal.target_price?.toFixed(2) || '-'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400">风险收益比</p>
                   <p className="text-lg font-bold text-blue-400">
-                    1:{analysis.signal.risk_reward_ratio.toFixed(2)}
+                    {(() => {
+                      const entry = analysis.signal.entry_price || 0;
+                      const stop = analysis.signal.stop_loss || 0;
+                      const target = analysis.signal.target_price || 0;
+                      if (entry && stop && target) {
+                        const risk = Math.abs(entry - stop);
+                        const reward = Math.abs(target - entry);
+                        const ratio = risk > 0 ? reward / risk : 0;
+                        return `1:${ratio.toFixed(2)}`;
+                      }
+                      return '-';
+                    })()}
                   </p>
                 </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-sm text-gray-400 mb-2">信号理由</p>
+                <p className="text-gray-300">{analysis.signal.reason || '暂无'}</p>
               </div>
               <div className="mt-4 flex items-center gap-4">
                 <div className="flex-1">

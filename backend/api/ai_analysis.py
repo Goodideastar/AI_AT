@@ -64,9 +64,19 @@ async def ai_analyze_market(
     # 计算技术指标
     df = add_all_indicators(df)
     
+    # 提取最新一行的指标数据
+    latest_indicators = {}
+    if not df.empty:
+        last_row = df.iloc[-1]
+        for col in df.columns:
+            if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']:
+                val = last_row[col]
+                if pd.notna(val):
+                    latest_indicators[col] = float(val)
+    
     # AI 分析
     analyst = MarketAnalyst()
-    analysis = await analyst.analyze_market(symbol, df)
+    analysis = await analyst.analyze_market(symbol, klines, latest_indicators)
     
     # 生成交易信号
     signal = await analyst.generate_signal(symbol, analysis)
@@ -173,8 +183,18 @@ async def get_ai_signals(
             # 计算指标
             df = add_all_indicators(df)
             
+            # 提取最新一行的指标数据
+            latest_indicators = {}
+            if not df.empty:
+                last_row = df.iloc[-1]
+                for col in df.columns:
+                    if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']:
+                        val = last_row[col]
+                        if pd.notna(val):
+                            latest_indicators[col] = float(val)
+            
             # AI 分析
-            analysis = await analyst.analyze_market(symbol, df)
+            analysis = await analyst.analyze_market(symbol, klines, latest_indicators)
             signal = await analyst.generate_signal(symbol, analysis)
             
             signals.append({

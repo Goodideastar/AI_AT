@@ -38,19 +38,20 @@ export interface AIAnalysisResponse {
     interval: string;
     analysis: {
       trend: string;
-      support: number;
-      resistance: number;
-      recommendation: string;
-      confidence: number;
-      reasoning: string;
+      trend_strength: string;
+      support_levels: number[];
+      resistance_levels: number[];
+      key_observations: string;
+      suggestion: string;
+      reason: string;
     };
     signal: {
       direction: string;
       entry_price: number;
       stop_loss: number;
-      take_profit: number;
+      target_price: number;
       confidence: number;
-      risk_reward_ratio: number;
+      reason: string;
     };
     timestamp: string;
   };
@@ -60,19 +61,20 @@ export interface AISignal {
   symbol: string;
   analysis: {
     trend: string;
-    support: number;
-    resistance: number;
-    recommendation: string;
-    confidence: number;
-    reasoning: string;
+    trend_strength: string;
+    support_levels: number[];
+    resistance_levels: number[];
+    key_observations: string;
+    suggestion: string;
+    reason: string;
   };
   signal: {
     direction: string;
     entry_price: number;
     stop_loss: number;
-    take_profit: number;
+    target_price: number;
     confidence: number;
-    risk_reward_ratio: number;
+    reason: string;
   };
   timestamp: string;
 }
