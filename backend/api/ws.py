@@ -151,6 +151,9 @@ async def market_websocket(
         username = payload.get("username")
         logger.info("WS 连接建立: user=%s/%s", user_id, username)
     except ValueError as e:
+        # 必须先 accept 再 close，否则客户端 onclose 拿到的是 1006 而非 4001，
+        # 无法区分"鉴权失败不重连"和"网络异常需重连"
+        await websocket.accept()
         await websocket.close(code=4001, reason=str(e))
         return
 
@@ -258,6 +261,7 @@ async def _broadcast_loop():
         except Exception as e:
             logger.exception("WS 广播循环异常: %s", e)
             await asyncio.sleep(5)  # 异常后短暂等待，避免 busy loop
+            continue  # 避免再走循环末尾的 sleep(1) 累计成 6 秒
 
         await asyncio.sleep(1)  # 1 秒推送频率
 
@@ -281,11 +285,14 @@ _heartbeat_task: Optional[asyncio.Task] = None
 
 
 def start_ws_background_tasks():
-    """在 FastAPI startup 事件中调用"""
+    """在 FastAPI startup 事件中调用
+
+    若任务已 done（异常退出或被取消），允许重启。
+    """
     global _broadcast_task, _heartbeat_task
-    if _broadcast_task is None:
+    if _broadcast_task is None or _broadcast_task.done():
         _broadcast_task = asyncio.create_task(_broadcast_loop())
-    if _heartbeat_task is None:
+    if _heartbeat_task is None or _heartbeat_task.done():
         _heartbeat_task = asyncio.create_task(_heartbeat_loop())
 
 

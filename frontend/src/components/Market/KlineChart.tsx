@@ -64,17 +64,22 @@ export default function KlineChart({ symbol, interval = '1h' }: KlineChartProps)
       if (chartRef.current) {
         chartRef.current.remove()
         chartRef.current = null
+        candlestickSeriesRef.current = null  // 防止 StrictMode 双挂载访问失效 series
       }
     }
   }, [])
 
   // 加载历史 K 线（仅在 symbol/interval 变化时重新拉取，不再轮询）
   useEffect(() => {
+    let cancelled = false  // 防止 await 期间组件卸载或 interval 切换后误更新
     const loadData = async () => {
       if (!candlestickSeriesRef.current) return
+      // 立即重置 lastBarTimeRef，避免 setData 完成前 WS ticker 误更新旧 interval 的 bar
+      lastBarTimeRef.current = 0
 
       try {
         const klines = await marketApi.getKlines(symbol, interval, 200)
+        if (cancelled) return
 
         const data: CandlestickData[] = klines.map(k => ({
           time: Math.floor(new Date(k.open_time).getTime() / 1000) as any,
@@ -103,18 +108,21 @@ export default function KlineChart({ symbol, interval = '1h' }: KlineChartProps)
     loadData()
     // 切换 symbol/interval 时重置实时价
     setLivePrice(null)
+    return () => { cancelled = true }
   }, [symbol, interval])
 
   // 接收 WS 推送的实时价，更新最新一根 K 线的 close/high/low
   useEffect(() => {
     if (!ticker || !candlestickSeriesRef.current) return
     if (ticker.symbol.toUpperCase() !== symbol.toUpperCase()) return
+    // lastBarTimeRef 为 0 表示 setData 尚未完成，跳过本次更新
+    if (lastBarTimeRef.current === 0) return
 
     setLivePrice(ticker.last_price)
 
-    // 更新图表上最新一根 K 线：close = last_price，high/low 同步刷新
-    const lastBar = candlestickSeriesRef.current.data()[0] as CandlestickData | undefined
-    // lightweight-charts v5 中 data() 返回的顺序可能不同，用 lastBarTimeRef 安全匹配
+    // lightweight-charts v5 中 data() 按时间升序，data()[length-1] 才是最新一根
+    const data = candlestickSeriesRef.current.data()
+    const lastBar = data[data.length - 1] as CandlestickData | undefined
     if (lastBar && (lastBar.time as number) === lastBarTimeRef.current) {
       const updated: CandlestickData = {
         time: lastBar.time,
