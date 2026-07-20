@@ -7,6 +7,7 @@ from service.verify_code import generate_verify_code, send_verify_code, verify_v
 from service.captcha import consume_captcha
 from config.redis import redis_client
 from security.jwt import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from utils.client_ip import get_client_ip
 import re
 import bcrypt
 import logging
@@ -86,12 +87,8 @@ async def register(request: Request, data: RegisterRequest):
         email = data.email
         verify_code = data.verify_code
         
-        # 获取客户端 IP 地址（支持反向代理）
-        forwarded_for = request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            client_ip = forwarded_for.split(",")[0].strip()
-        else:
-            client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else None)
+        # 获取客户端 IP 地址（支持反向代理，已防伪造）
+        client_ip = get_client_ip(request)
         
         # 1. 频率限制（最先）
         logger.info(f"[注册] 检查频率限制: username={username}, email={email}, ip={client_ip}")

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from service.captcha import generate_captcha, verify_captcha, generate_digit_captcha
 from api.register import check_rate_limit
+from utils.client_ip import get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +23,7 @@ class VerifyRequest(BaseModel):
 async def captcha_generate(request: Request):
     """生成滑动拼图验证码（无需鉴权）。"""
     # IP 级限流：每 IP 每分钟最多 10 次
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        client_ip = forwarded_for.split(",")[0].strip()
-    else:
-        client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
-
+    client_ip = get_client_ip(request)
     if check_rate_limit(f"captcha_gen:{client_ip}", limit=10, window=60):
         raise HTTPException(status_code=429, detail="操作过于频繁，请稍后再试")
 
@@ -53,12 +49,7 @@ async def captcha_verify(data: VerifyRequest):
 @router.post("/captcha/login/generate")
 async def captcha_login_generate(request: Request):
     """生成 4 位数字图形验证码（用于登录，无需鉴权）。"""
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        client_ip = forwarded_for.split(",")[0].strip()
-    else:
-        client_ip = request.headers.get("X-Real-IP") or (request.client.host if request.client else "unknown")
-
+    client_ip = get_client_ip(request)
     if check_rate_limit(f"login_captcha_gen:{client_ip}", limit=20, window=60):
         raise HTTPException(status_code=429, detail="操作过于频繁，请稍后再试")
 
