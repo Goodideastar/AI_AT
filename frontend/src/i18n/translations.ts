@@ -11,6 +11,12 @@ export const translations = {
   'nav.login': { zh: '登录', en: 'Log in' },
   'nav.logout': { zh: '退出登录', en: 'Log out' },
   'nav.logoutShort': { zh: '退出', en: 'Exit' },
+  'nav.dashboard': { zh: '看板', en: 'Dashboard' },
+  'nav.aiAnalysis': { zh: 'AI分析', en: 'AI Analysis' },
+  'nav.strategy': { zh: '策略', en: 'Strategy' },
+  'nav.backtest': { zh: '回测', en: 'Backtest' },
+  'nav.trade': { zh: '交易', en: 'Trade' },
+  'nav.market': { zh: '策略市场', en: 'Market' },
 
   // ── Hero ──
   'hero.brain': { zh: 'Brain', en: 'Brain' },

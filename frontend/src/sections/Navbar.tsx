@@ -36,6 +36,20 @@ export default function Navbar({ entranceComplete, onOpenAuth }: NavbarProps) {
     </motion.button>
   )
 
+  // 量化平台导航链接（仅登录用户可见）
+  const quantNavItems = [
+    { key: 'nav.dashboard', label: t('nav.dashboard'), path: '/dashboard' },
+    { key: 'nav.aiAnalysis', label: t('nav.aiAnalysis'), path: '/ai-analysis' },
+    { key: 'nav.strategy', label: t('nav.strategy'), path: '/strategy' },
+    { key: 'nav.backtest', label: t('nav.backtest'), path: '/backtest' },
+    { key: 'nav.trade', label: t('nav.trade'), path: '/trade' },
+    { key: 'nav.market', label: t('nav.market'), path: '/strategy-market' },
+  ]
+
+  const navigateTo = (path: string) => {
+    window.location.href = path
+  }
+
   return (
     <motion.nav
       className="fixed top-0 left-0 right-0 z-50 h-20 px-4 sm:px-6 md:px-8 flex items-center justify-between"
@@ -91,6 +105,19 @@ export default function Navbar({ entranceComplete, onOpenAuth }: NavbarProps) {
 
       {/* ── Desktop right: lang/auth/download ── */}
       <div className="hidden sm:flex items-center gap-2">
+        {isLoggedIn && (
+          <div className="flex items-center gap-1 mr-2">
+            {quantNavItems.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => navigateTo(item.path)}
+                className="text-white/85 hover:text-white text-sm px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
         <LangToggle />
         {isLoggedIn ? (
           <div className="flex items-center gap-2">
@@ -174,7 +201,7 @@ export default function Navbar({ entranceComplete, onOpenAuth }: NavbarProps) {
       {/* Mobile dropdown */}
       {menuOpen && (
         <motion.div
-          className="absolute top-20 left-4 right-4 bg-white/10 backdrop-blur-md rounded-[14px] p-2 flex flex-col gap-1 sm:hidden"
+          className="absolute top-20 left-4 right-4 bg-white/10 backdrop-blur-md rounded-[14px] p-2 flex flex-col gap-1 sm:hidden max-h-[80vh] overflow-y-auto"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -183,6 +210,18 @@ export default function Navbar({ entranceComplete, onOpenAuth }: NavbarProps) {
               key={item.key}
               onClick={() => {
                 scrollTo(item.vh)
+                setMenuOpen(false)
+              }}
+              className="text-left text-white/85 text-sm px-4 py-3 rounded-lg hover:bg-white/10"
+            >
+              {item.label}
+            </button>
+          ))}
+          {isLoggedIn && quantNavItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => {
+                navigateTo(item.path)
                 setMenuOpen(false)
               }}
               className="text-left text-white/85 text-sm px-4 py-3 rounded-lg hover:bg-white/10"

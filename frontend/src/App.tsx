@@ -13,6 +13,10 @@ import UserAgreement from './pages/UserAgreement'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Dashboard from './pages/Dashboard'
 import AIAnalysis from './pages/AIAnalysis'
+import Strategy from './pages/Strategy'
+import Backtest from './pages/Backtest'
+import Trade from './pages/Trade'
+import StrategyMarket from './pages/StrategyMarket'
 
 export default function App() {
   // Hero entrance drives the Navbar fade-in.
@@ -62,6 +66,62 @@ export default function App() {
     return (
       <AuthProvider>
         <AIAnalysis />
+        <AuthModal
+          open={authOpen}
+          initialMode={authMode}
+          onClose={() => setAuthOpen(false)}
+        />
+      </AuthProvider>
+    )
+  }
+
+  // Strategy management route
+  if (pathname === '/strategy') {
+    return (
+      <AuthProvider>
+        <Strategy />
+        <AuthModal
+          open={authOpen}
+          initialMode={authMode}
+          onClose={() => setAuthOpen(false)}
+        />
+      </AuthProvider>
+    )
+  }
+
+  // Backtest route
+  if (pathname === '/backtest') {
+    return (
+      <AuthProvider>
+        <Backtest />
+        <AuthModal
+          open={authOpen}
+          initialMode={authMode}
+          onClose={() => setAuthOpen(false)}
+        />
+      </AuthProvider>
+    )
+  }
+
+  // Trade route
+  if (pathname === '/trade') {
+    return (
+      <AuthProvider>
+        <Trade />
+        <AuthModal
+          open={authOpen}
+          initialMode={authMode}
+          onClose={() => setAuthOpen(false)}
+        />
+      </AuthProvider>
+    )
+  }
+
+  // Strategy Market route
+  if (pathname === '/strategy-market') {
+    return (
+      <AuthProvider>
+        <StrategyMarket />
         <AuthModal
           open={authOpen}
           initialMode={authMode}
