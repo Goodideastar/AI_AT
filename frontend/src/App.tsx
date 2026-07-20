@@ -11,6 +11,7 @@ import AuthModal from './components/AuthModal'
 import NotFound from './pages/NotFound'
 import UserAgreement from './pages/UserAgreement'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Dashboard from './pages/Dashboard'
 
 export default function App() {
   // Hero entrance drives the Navbar fade-in.
@@ -39,6 +40,20 @@ export default function App() {
   }
   if (pathname === '/privacy-policy') {
     return <PrivacyPolicy />
+  }
+
+  // Dashboard route
+  if (pathname === '/dashboard') {
+    return (
+      <AuthProvider>
+        <Dashboard entranceComplete={true} onOpenAuth={openAuth} />
+        <AuthModal
+          open={authOpen}
+          initialMode={authMode}
+          onClose={() => setAuthOpen(false)}
+        />
+      </AuthProvider>
+    )
   }
 
   // Anything other than "/" renders the 404 page.
