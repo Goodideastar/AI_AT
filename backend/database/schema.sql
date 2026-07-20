@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS klines (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
     symbol VARCHAR(20) NOT NULL COMMENT '交易对符号',
     exchange VARCHAR(20) NOT NULL COMMENT '交易所',
-    interval VARCHAR(5) NOT NULL COMMENT 'K线周期：1m/5m/15m/1h/4h/1d/1w',
+    `interval` VARCHAR(5) NOT NULL COMMENT 'K线周期：1m/5m/15m/1h/4h/1d/1w（interval 是 MySQL 保留字，必须用反引号）',
     open_time DATETIME NOT NULL COMMENT '开盘时间',
     open DECIMAL(20, 8) NOT NULL COMMENT '开盘价',
     high DECIMAL(20, 8) NOT NULL COMMENT '最高价',
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS klines (
     close_time DATETIME NOT NULL COMMENT '收盘时间',
 
     -- 同一交易所、同一交易对、同一周期、同一开盘时间唯一
-    UNIQUE KEY idx_kline_lookup (symbol, exchange, interval, open_time),
-    INDEX idx_symbol_interval (symbol, interval),
+    UNIQUE KEY idx_kline_lookup (symbol, exchange, `interval`, open_time),
+    INDEX idx_symbol_interval (symbol, `interval`),
     INDEX idx_open_time (open_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='K线数据表';
 
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS positions (
 
     INDEX idx_user_id (user_id),
     INDEX idx_symbol (symbol),
-    UNIQUE KEY idx_user_symbol_exchange (user_id, symbol, exchange),
+    UNIQUE KEY uq_position_user_symbol_exchange (user_id, symbol, exchange),
     CONSTRAINT fk_position_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='持仓表';
 
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS strategy_subscriptions (
     INDEX idx_share_id (share_id),
     INDEX idx_status (status),
     -- 同一用户对同一分享只能有一条有效订阅记录
-    UNIQUE KEY idx_user_share (user_id, share_id),
+    UNIQUE KEY uq_subscription_user_share (user_id, share_id),
     CONSTRAINT fk_subscription_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_subscription_share FOREIGN KEY (share_id) REFERENCES strategy_shares(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='策略订阅表';

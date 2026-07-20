@@ -6,9 +6,14 @@ from service.market.base import MarketDataSource
 
 
 class BinanceDataSource(MarketDataSource):
-    """Binance 数据源"""
+    """Binance 数据源
 
-    BASE_URL = "https://api.binance.com/api/v3"
+    使用 data-api.binance.vision 作为镜像域名（国内可直连），
+    api.binance.com / api1.binance.com 在国内网络环境下经常超时。
+    binance.vision 是 Binance 官方的公开数据镜像，接口完全兼容。
+    """
+
+    BASE_URL = "https://data-api.binance.vision/api/v3"
 
     def __init__(self):
         super().__init__("binance")
